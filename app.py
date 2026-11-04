@@ -4,38 +4,49 @@ from scipy.integrate import solve_ivp
 
 st.set_page_config(page_title="Process Digital Twin Optimizer", layout="centered")
 
-st.title("⚡ Process Digital Twin & Kinetic Optimizer")
-st.write("Real-time simulation and automated setpoint optimization for chemical reactors.")
+st.title("🔥 Industrial PDT: Arrhenius Reactor")
+st.write("Simulating real-time chemical kinetics based on reactor temperature control.")
 
-# Sidebar Controls for Operators
-st.sidebar.header("Operational Controls")
-temp_factor = st.sidebar.slider("Reaction Rate Constant (k)", 0.05, 0.50, 0.15)
-feed_concentration = st.sidebar.number_input("Initial Feed Concentration (mol/L)", value=1.0)
+# Sidebar: Real Industrial Parameters
+st.sidebar.header("Plant Operating Controls")
+temp_kelvin = st.sidebar.slider("Reactor Temperature (K)", 300.0, 450.0, 350.0)
+initial_conc = st.sidebar.number_input("Initial Feed Concentration (mol/L)", value=1.0)
 
-# Run simulation
-def reactor_model(t, y, k):
-    return [-k * y[0]]
+# Chemical Kinetics: Arrhenius Equation (k = A * exp(-Ea / (R * T)))
+# A = pre-exponential factor, Ea = Activation Energy, R = Universal Gas Constant
+A_factor = 1e5
+Ea_over_R = 4000.0  # Simplified activation energy parameter
+k_calculated = A_factor * np.exp(-Ea_over_R / temp_kelvin) / 1000  scaled for display
+
+# Reactor Model Differential Equation
+def complex_reactor(t, y, k):
+    cA = y[0]
+    dAdt = -k * cA  # First-order consumption
+    return [dAdt]
 
 time_span = (0, 20)
 eval_times = np.linspace(0, 20, 100)
-solution = solve_ivp(reactor_model, time_span, [feed_concentration], args=(temp_factor,), t_eval=eval_times)
+solution = solve_ivp(complex_reactor, time_span, [initial_conc], args=(k_calculated,), t_eval=eval_times)
 
-# Main Dashboard Layout
+# Display Key Metrics
 col1, col2 = st.columns(2)
-
 with col1:
-    st.metric(label="Final Yield Concentration", value=f"{solution.y[0][-1]:.4f} mol/L")
-
+    st.metric(label="Calculated Rate Constant (k)", value=f"{k_calculated:.4f}")
 with col2:
-    # Simple Optimization Logic: Find best rate for 80% consumption efficiency
-    optimal_k = 0.25
-    st.metric(label="AI Recommended Optimal (k)", value=f"{optimal_k}")
+    st.metric(label="Final Output Concentration", value=f"{solution.y[0][-1]:.4f} mol/L")
 
-st.subheader("Reactant Concentration Decay Over Time")
-chart_data = {"Time (min)": solution.t, "Concentration of A": solution.y[0]}
+# Chart
+st.subheader("Real-Time Concentration Profile")
+chart_data = {"Time (min)": solution.t, "Reactant A": solution.y[0]}
 st.line_chart(chart_data, x="Time (min)")
 
-# Optimization Recommendation Box
-st.info("💡 **Optimization Insight:** Based on current reaction kinetics, increasing the rate constant (k) to 0.25 will optimize product output and reduce cycle time by 18%.")
+# Optimization Logic based on temperature thresholds
+if temp_kelvin > 400:
+    st.warning("⚠️ **Thermal Warning:** Temperature is high. Risk of reaction runaway or catalyst degradation!")
+elif temp_kelvin < 320:
+    st.info("💡 **Optimization Insight:** Temperature is too low. Reaction rate is sluggish; increase temperature to boost yield speed.")
+else:
+    st.success("✅ **System Status:** Reactor operating within optimal kinetic window.")
 
-st.success("Digital twin telemetry link: ACTIVE 🟢")
+st.markdown("---")
+st.caption("Digital Twin Telemetry: ACTIVE 🟢 | Powered by SciPy & Streamlit")
