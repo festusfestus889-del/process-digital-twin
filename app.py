@@ -4,6 +4,7 @@ import pandas as pd
 from scipy.integrate import solve_ivp
 from scipy.optimize import minimize_scalar
 import datetime
+import os
 
 st.set_page_config(page_title="Process Digital Twin Enterprise", layout="centered")
 
@@ -11,7 +12,7 @@ st.title("🏭 Industrial PDT: Enterprise Suite")
 st.write("Autonomous chemical reactor simulation, kinetic optimization, and compliance reporting.")
 
 # Navigation Mode Selection
-mode = st.sidebar.radio("Select Operating Mode", ["Digital Twin Simulation", "Upload Plant CSV Logs"])
+mode = st.sidebar.radio("Select Operating Mode", ["Digital Twin Simulation", "Plant CSV Log Auditing"])
 
 # Arrhenius Kinetics Model
 A_factor = 1e5
@@ -57,7 +58,6 @@ if mode == "Digital Twin Simulation":
     else:
         st.info(f"💡 Adjust temperature to **{optimal_temp:.1f} K** for optimal yield.")
 
-    # --- NEW: Export Batch Report Feature ---
     st.markdown("---")
     st.subheader("📋 Batch Compliance Report Generation")
     
@@ -80,26 +80,19 @@ if mode == "Digital Twin Simulation":
         )
 
 else:
-    st.header("📂 Plant Sensor Log Auditing (CSV)")
-    st.write("Upload historical time-series telemetry data from plant sensors to audit batch performance.")
+    st.header("📂 Plant Sensor Log Auditing")
+    st.write("Auditing historical time-series telemetry data from your repository.")
     
-    uploaded_file = st.file_uploader("Upload CSV Sensor Data", type=["csv"])
-    
-    if uploaded_file is not None:
-        df = pd.read_csv(uploaded_file)
-        st.success("Telemetry data successfully ingested!")
+    # Automatically load plant_telemetry.csv from repository if it exists
+    if os.path.exists("plant_telemetry.csv"):
+        df = pd.read_csv("plant_telemetry.csv")
+        st.success("✅ Successfully loaded `plant_telemetry.csv` from repository!")
         st.dataframe(df.head())
-        st.line_chart(df)
+        
+        st.subheader("Telemetry Sensor Trends")
+        st.line_chart(df, x="Time_min", y=["Sensor_Temp_K", "Concentration_A"])
     else:
-        st.info("ℹ️ No file uploaded yet. Generate sample plant telemetry to test auditing mode.")
-        if st.button("Generate Sample Plant Telemetry CSV"):
-            sample_df = pd.DataFrame({
-                "Time_min": np.linspace(0, 20, 20),
-                "Sensor_Temp_K": np.linspace(350, 380, 20),
-                "Concentration_A": np.exp(-0.1 * np.linspace(0, 20, 20))
-            })
-            st.dataframe(sample_df)
-            st.download_button("Download Sample CSV", sample_df.to_csv(index=False), "plant_telemetry.csv", "text/csv")
+        st.warning("⚠️ `plant_telemetry.csv` not found in the root directory.")
 
 st.markdown("---")
-st.caption("Industrial PDT Engine v1.1 | Enterprise Security & Telemetry Active 🟢")
+st.caption("Industrial PDT Engine v1.2 | Enterprise Security & Telemetry Active 🟢")
