@@ -12,11 +12,10 @@ st.sidebar.header("Plant Operating Controls")
 temp_kelvin = st.sidebar.slider("Reactor Temperature (K)", 300.0, 450.0, 350.0)
 initial_conc = st.sidebar.number_input("Initial Feed Concentration (mol/L)", value=1.0)
 
-# Chemical Kinetics: Arrhenius Equation (k = A * exp(-Ea / (R * T)))
-# A = pre-exponential factor, Ea = Activation Energy, R = Universal Gas Constant
+# Chemical Kinetics: Arrhenius Equation
 A_factor = 1e5
-Ea_over_R = 4000.0  # Simplified activation energy parameter
-k_calculated = A_factor * np.exp(-Ea_over_R / temp_kelvin) / 1000  scaled for display
+Ea_over_R = 4000.0  # Activation energy parameter
+k_calculated = (A_factor * np.exp(-Ea_over_R / temp_kelvin)) / 1000  # scaled for display
 
 # Reactor Model Differential Equation
 def complex_reactor(t, y, k):
