@@ -3,11 +3,12 @@ import numpy as np
 import pandas as pd
 from scipy.integrate import solve_ivp
 from scipy.optimize import minimize_scalar
+import datetime
 
-st.set_page_config(page_title="Process Digital Twin Platform", layout="centered")
+st.set_page_config(page_title="Process Digital Twin Enterprise", layout="centered")
 
 st.title("🏭 Industrial PDT: Enterprise Suite")
-st.write("Autonomous chemical reactor simulation, kinetic optimization, and telemetry auditing.")
+st.write("Autonomous chemical reactor simulation, kinetic optimization, and compliance reporting.")
 
 # Navigation Mode Selection
 mode = st.sidebar.radio("Select Operating Mode", ["Digital Twin Simulation", "Upload Plant CSV Logs"])
@@ -56,11 +57,33 @@ if mode == "Digital Twin Simulation":
     else:
         st.info(f"💡 Adjust temperature to **{optimal_temp:.1f} K** for optimal yield.")
 
+    # --- NEW: Export Batch Report Feature ---
+    st.markdown("---")
+    st.subheader("📋 Batch Compliance Report Generation")
+    
+    if st.button("Generate Official Batch Report"):
+        report_data = pd.DataFrame({
+            "Timestamp": [datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
+            "Reactor_Temp_K": [temp_kelvin],
+            "Optimal_Temp_K": [optimal_temp],
+            "Initial_Concentration": [initial_conc],
+            "Final_Yield": [solution.y[0][-1]],
+            "Status": ["Approved" if abs(temp_kelvin - optimal_temp) < 5 else "Sub-optimal"]
+        })
+        
+        st.dataframe(report_data)
+        st.download_button(
+            label="📥 Download Compliance Report (CSV)",
+            data=report_data.to_csv(index=False),
+            file_name=f"Batch_Report_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv"
+        )
+
 else:
     st.header("📂 Plant Sensor Log Auditing (CSV)")
     st.write("Upload historical time-series telemetry data from plant sensors to audit batch performance.")
     
-    uploaded_file = st.file_uploader("Upload CSV Sensor Data (Columns: Time, Temperature, Concentration)", type=["csv"])
+    uploaded_file = st.file_uploader("Upload CSV Sensor Data", type=["csv"])
     
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
@@ -68,9 +91,7 @@ else:
         st.dataframe(df.head())
         st.line_chart(df)
     else:
-        st.info("ℹ️ No file uploaded yet. You can test by uploading a sample CSV or using the simulation mode.")
-        
-        # Provide sample data generation for quick testing
+        st.info("ℹ️ No file uploaded yet. Generate sample plant telemetry to test auditing mode.")
         if st.button("Generate Sample Plant Telemetry CSV"):
             sample_df = pd.DataFrame({
                 "Time_min": np.linspace(0, 20, 20),
@@ -81,4 +102,4 @@ else:
             st.download_button("Download Sample CSV", sample_df.to_csv(index=False), "plant_telemetry.csv", "text/csv")
 
 st.markdown("---")
-st.caption("Industrial PDT Engine v1.0 | Enterprise Security & Telemetry Active 🟢")
+st.caption("Industrial PDT Engine v1.1 | Enterprise Security & Telemetry Active 🟢")
